@@ -1,5 +1,6 @@
 package org.elsys.server;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +12,45 @@ public class SessionManager {
     private List<SessionData> sessions = new ArrayList<>();
 
     private SessionManager() {
+        new HandleCommunication().start();
+    }
+
+    class HandleCommunication extends Thread {
+
+        @Override
+        public void run() {
+            try {
+                handleMessages();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void handleMessages() throws IOException {
+            while (true) {
+                synchronized (sessions) {
+                    for (SessionData session : sessions) {
+                        String message = session.in().readLine();
+                        if (message != null) {
+                            sendToAll(message);
+                        }
+                    }
+                }
+            }
+        }
 
     }
 
+    private void sendToAll(String message) {
+        for (SessionData session : sessions) {
+            session.out().println(message);
+        }
+    }
+
     static public SessionManager the() {
-        if (sessionManager_ == null)
+        if (sessionManager_ == null) {
             sessionManager_ = new SessionManager();
+        }
         return sessionManager_;
     }
 
@@ -28,7 +62,9 @@ public class SessionManager {
                 clientSocket
         );
 
-        sessions.add(data);
+        synchronized (sessions) {
+            sessions.add(data);
+        }
         return data;
     }
 

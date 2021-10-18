@@ -18,7 +18,7 @@ public class Client {
         out = new PrintWriter(clientSocket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         id = in.readLine();
-        System.out.println(id);
+        System.out.println("client-id: " + id);
     }
 
     public String sendMessage(String msg) throws IOException {
@@ -27,10 +27,21 @@ public class Client {
         return resp;
     }
 
-    public void stopConnection() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
+    class GetMessage extends Thread {
+        @Override
+        public void run() {
+            while (true) {
+                String msg = null;
+                try {
+                    msg = in.readLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (msg != null) {
+                    System.out.println(msg);
+                }
+            }
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -39,10 +50,9 @@ public class Client {
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
+            System.out.print("Enter message: ");
             String msg = scanner.nextLine();
             System.out.println(client.sendMessage(msg));
         }
-
-//        client.stopConnection();
     }
 }
