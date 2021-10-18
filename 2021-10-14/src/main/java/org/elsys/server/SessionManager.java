@@ -3,47 +3,56 @@ package org.elsys.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 public class SessionManager {
 
     private static SessionManager sessionManager_ = null;
-    private List<SessionData> sessions = new ArrayList<>();
+    private final List<Session> sessions = Collections.synchronizedList(new ArrayList<>());
 
     private SessionManager() {
-        new HandleCommunication().start();
     }
 
     class HandleCommunication extends Thread {
 
-        @Override
-        public void run() {
-            try {
-                handleMessages();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        private final Session session;
+
+        HandleCommunication(Session session) {
+            this.session = session;
         }
 
-        private void handleMessages() throws IOException {
+        @Override
+        public void run() {
+            handleMessages();
+        }
+
+        private void handleMessages() {
             while (true) {
-                synchronized (sessions) {
-                    for (SessionData session : sessions) {
-                        String message = session.in().readLine();
-                        if (message != null) {
-                            sendToAll(message);
+                try {
+                    String message = session.in().readLine();
+                    if (message != null) {
+                        if (message.equals("exit")) {
+                            sessions.remove(session);
+                            session.closeConnection();
+                            break;
                         }
+                        sendToAll(session.getId(), message);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
 
-    }
-
-    private void sendToAll(String message) {
-        for (SessionData session : sessions) {
-            session.out().println(message);
+        private void sendToAll(String sender, String message) {
+            for (Session session : sessions) {
+                if (session.getId().equals(sender)) {
+                    continue;
+                }
+                session.out().println(sender + ": " + message);
+            }
         }
     }
 
@@ -54,22 +63,16 @@ public class SessionManager {
         return sessionManager_;
     }
 
-    public SessionData beginNew(Socket clientSocket) {
-        // Use clientSocket;
-
-        SessionData data = new SessionData(
+    public Session beginNew(Socket clientSocket) {
+        Session data = new Session(
                 UUID.randomUUID().toString(),
                 clientSocket
         );
 
-        synchronized (sessions) {
-            sessions.add(data);
-        }
-        return data;
-    }
+        new HandleCommunication(data).start();
+        sessions.add(data);
 
-    public static void end(String targetId) {
-        //
+        return data;
     }
 
 }

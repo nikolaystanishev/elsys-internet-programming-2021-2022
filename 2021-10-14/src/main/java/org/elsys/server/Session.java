@@ -6,20 +6,24 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class SessionData {
+public class Session {
 
     private final String id;
     private final Socket clientSocket;
     private PrintWriter out_;
     private BufferedReader in_;
 
-    public SessionData(String uuid, Socket clientSocket) {
+    public Session(String uuid, Socket clientSocket) {
         this.id = uuid;
         this.clientSocket = clientSocket;
 
         // Lazy-load these
         this.out_ = null;
         this.in_ = null;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public BufferedReader in() {
@@ -45,8 +49,9 @@ public class SessionData {
         return out_;
     }
 
-    public String getId() {
-        return id;
+    public void closeConnection() throws IOException {
+        clientSocket.close();
+        in().close();
+        out().close();
     }
-
 }

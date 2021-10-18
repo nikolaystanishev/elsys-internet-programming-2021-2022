@@ -8,23 +8,28 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-    private Socket clientSocket;
-    private PrintWriter out;
     private BufferedReader in;
-    private String id;
+    private PrintWriter out;
 
-    public void startConnection(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        id = in.readLine();
-        System.out.println("client-id: " + id);
+    Client() {
+        try {
+            initialize();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public String sendMessage(String msg) throws IOException {
+    public void startConnection(String ip, int port) throws IOException {
+        Socket clientSocket = new Socket(ip, port);
+        out = new PrintWriter(clientSocket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        String id = in.readLine();
+        System.out.println("client-id: " + id);
+        new GetMessage().start();
+    }
+
+    public void sendMessage(String msg) {
         out.println(msg);
-        String resp = in.readLine();
-        return resp;
     }
 
     class GetMessage extends Thread {
@@ -44,15 +49,14 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        Client client = new Client();
-        client.startConnection("localhost", 9999);
+    public void initialize() throws IOException {
+        startConnection("localhost", 9999);
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.print("Enter message: ");
             String msg = scanner.nextLine();
-            System.out.println(client.sendMessage(msg));
+            sendMessage(msg);
         }
     }
 }
