@@ -1,9 +1,12 @@
 package org.elsys.ip.quizgame.rest;
 
 import org.assertj.core.util.Lists;
+import org.elsys.ip.quizgame.error.UserAlreadyExistsException;
 import org.elsys.ip.quizgame.model.Answer;
 import org.elsys.ip.quizgame.model.Question;
 import org.elsys.ip.quizgame.model.QuestionRepository;
+import org.elsys.ip.quizgame.service.UserService;
+import org.elsys.ip.quizgame.web.model.UserDto;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,10 +33,20 @@ public class QuestionControllerTest {
     @Autowired
     private QuestionRepository repository;
 
+    @Autowired
+    private UserService userService;
+
     private String questionId;
 
     @BeforeAll
-    public void setUp() {
+    public void setUp() throws UserAlreadyExistsException {
+        UserDto user = new UserDto();
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setEmail("email@email.com");
+        user.setPassword("password");
+        userService.registerNewUserAccount(user);
+
         Question question = new Question();
         question.setText("2 + 2 = ?");
         Answer answer1 = new Answer();
@@ -59,14 +72,14 @@ public class QuestionControllerTest {
 
     @Test
     public void getQuestionById() {
-        Question question = restTemplate.getForObject("http://localhost:" + port + "/?questionId=" + questionId, Question.class);
+        Question question = restTemplate.withBasicAuth("email@email.com", "password").getForObject("http://localhost:" + port + "/question?questionId=" + questionId, Question.class);
 
         assertThat(question.getText()).isEqualTo("2 + 2 = ?");
     }
 
     @Test
     public void getMissingQuestionById() {
-        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:" + port + "/?questionId=" + UUID.randomUUID().toString(), String.class);
+        ResponseEntity<String> response = restTemplate.withBasicAuth("email@email.com", "password").getForEntity("http://localhost:" + port + "/question?questionId=" + UUID.randomUUID().toString(), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(NOT_FOUND);
     }
