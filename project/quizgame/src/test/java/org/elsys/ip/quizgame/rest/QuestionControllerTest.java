@@ -72,14 +72,14 @@ public class QuestionControllerTest {
 
     @Test
     public void getQuestionById() {
-        Question question = restTemplate.withBasicAuth("email@email.com", "password").getForObject("http://localhost:" + port + "/question?questionId=" + questionId, Question.class);
+        Question question = restTemplate.withBasicAuth("email@email.com", "password").getForObject("http://localhost:" + port + "/api/question?questionId=" + questionId, Question.class);
 
         assertThat(question.getText()).isEqualTo("2 + 2 = ?");
     }
 
     @Test
     public void getMissingQuestionById() {
-        ResponseEntity<String> response = restTemplate.withBasicAuth("email@email.com", "password").getForEntity("http://localhost:" + port + "/question?questionId=" + UUID.randomUUID().toString(), String.class);
+        ResponseEntity<String> response = restTemplate.withBasicAuth("email@email.com", "password").getForEntity("http://localhost:" + port + "/api/question?questionId=" + UUID.randomUUID().toString(), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(NOT_FOUND);
     }

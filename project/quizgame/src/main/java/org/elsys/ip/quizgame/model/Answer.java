@@ -42,4 +42,13 @@ public class Answer {
     public void setCorrect(boolean correct) {
         this.correct = correct;
     }
+
+    @Override
+    public String toString() {
+        return "Answer{" +
+                "id=" + id +
+                ", text='" + text + '\'' +
+                ", correct=" + correct +
+                '}';
+    }
 }

@@ -13,7 +13,7 @@ import java.util.UUID;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
-@RequestMapping("question")
+@RequestMapping("/api/question")
 public class QuestionController {
     private final QuestionRepository repository;
 
